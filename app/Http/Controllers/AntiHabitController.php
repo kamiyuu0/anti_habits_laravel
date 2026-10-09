@@ -21,12 +21,7 @@ class AntiHabitController extends Controller
 
         $antiHabits = AntiHabit::query()
             ->publiclyVisible()
-            ->when($keyword !== '', function (Builder $query) use ($keyword) {
-                $like = '%'.self::escapeLike($keyword).'%';
-                $query->where(fn (Builder $q) => $q
-                    ->where('anti_habits.title', 'ilike', $like)
-                    ->orWhere('anti_habits.description', 'ilike', $like));
-            })
+            ->when($keyword !== '', fn (Builder $query) => $query->titleOrDescriptionMatching($keyword))
             ->when($tagName !== '', fn (Builder $query) => $query->taggedWith($tagName))
             ->withAssociations()
             ->recent()
@@ -49,7 +44,7 @@ class AntiHabitController extends Controller
             ? collect()
             : AntiHabit::query()
                 ->publiclyVisible()
-                ->where('title', 'ilike', '%'.self::escapeLike($query).'%')
+                ->titleMatching($query)
                 ->recent()
                 ->limit(10)
                 ->get();
@@ -84,19 +79,13 @@ class AntiHabitController extends Controller
             return redirect()->route('anti_habits.index')->with('alert', 'このページにアクセスする権限がありません。');
         }
 
-        $fontSize = match (true) {
-            mb_strlen($antiHabit->title) > 15 => '25',
-            mb_strlen($antiHabit->title) > 10 => '30',
-            default => '50',
-        };
-
         return view('anti_habits.show', [
             'antiHabit' => $antiHabit,
             'isOwner' => $isOwner,
             'todayRecord' => $isOwner ? $antiHabit->todayRecord() : null,
             'comments' => $antiHabit->comments()->with('user')->latest()->get(),
             'calendarData' => $isOwner ? $antiHabit->calendarData(90) : null,
-            'ogpImageUrl' => "https://res.cloudinary.com/antihabits/image/upload/l_text:Sawarabi%20Gothic_{$fontSize}_solid:{$antiHabit->title},co_rgb:333,w_500,c_fit/v1757602327/anti_habits_dynamic_ogp_zyyjyk.png",
+            'ogpImageUrl' => $antiHabit->ogpImageUrl(),
         ]);
     }
 
@@ -126,10 +115,5 @@ class AntiHabitController extends Controller
         DB::transaction(fn () => $antiHabit->delete());
 
         return redirect()->route('anti_habits.index', status: 303)->with('notice', '悪習慣を削除しました。');
-    }
-
-    private static function escapeLike(string $value): string
-    {
-        return addcslashes($value, '\\%_');
     }
 }

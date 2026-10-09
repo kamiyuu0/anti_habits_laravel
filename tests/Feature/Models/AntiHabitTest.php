@@ -65,6 +65,62 @@ class AntiHabitTest extends TestCase
         $this->assertNotContains($private->id, $ids);
     }
 
+    #[Test]
+    public function title_or_description_matching_はタイトルか説明の部分一致を大文字小文字無視で返す(): void
+    {
+        $byTitle = AntiHabit::factory()->create(['title' => 'Late Night Snack', 'description' => 'x']);
+        $byDescription = AntiHabit::factory()->create(['title' => 'x', 'description' => 'eat a SNACK']);
+        $other = AntiHabit::factory()->create(['title' => 'x', 'description' => 'y']);
+
+        $ids = AntiHabit::titleOrDescriptionMatching('snack')->pluck('id');
+
+        $this->assertEqualsCanonicalizing([$byTitle->id, $byDescription->id], $ids->all());
+        $this->assertNotContains($other->id, $ids);
+    }
+
+    #[Test]
+    public function title_matching_はタイトルのみを対象にする(): void
+    {
+        $byTitle = AntiHabit::factory()->create(['title' => '夜更かし', 'description' => 'x']);
+        AntiHabit::factory()->create(['title' => 'x', 'description' => '夜更かし']);
+
+        $this->assertSame([$byTitle->id], AntiHabit::titleMatching('夜')->pluck('id')->all());
+    }
+
+    #[Test]
+    public function 検索語の_like_メタ文字はエスケープされる(): void
+    {
+        $literal = AntiHabit::factory()->create(['title' => '100%達成', 'description' => 'x']);
+        AntiHabit::factory()->create(['title' => '100円', 'description' => 'x']);
+        $underscore = AntiHabit::factory()->create(['title' => 'a_b', 'description' => 'x']);
+        AntiHabit::factory()->create(['title' => 'axb', 'description' => 'x']);
+
+        $this->assertSame([$literal->id], AntiHabit::titleOrDescriptionMatching('100%')->pluck('id')->all());
+        $this->assertSame([$underscore->id], AntiHabit::titleMatching('a_b')->pluck('id')->all());
+    }
+
+    // ---- OGP ----
+
+    public static function ogpFontSizeProvider(): array
+    {
+        return [
+            '10文字' => [str_repeat('あ', 10), '50'],
+            '11文字' => [str_repeat('あ', 11), '30'],
+            '15文字' => [str_repeat('あ', 15), '30'],
+            '16文字' => [str_repeat('あ', 16), '25'],
+        ];
+    }
+
+    #[Test]
+    #[DataProvider('ogpFontSizeProvider')]
+    public function ogp_image_url_はタイトル長に応じたフォントサイズを使う(string $title, string $fontSize): void
+    {
+        $url = AntiHabit::factory()->make(['title' => $title])->ogpImageUrl();
+
+        $this->assertStringStartsWith('https://res.cloudinary.com/antihabits/image/upload/', $url);
+        $this->assertStringContainsString("l_text:Sawarabi%20Gothic_{$fontSize}_solid:{$title},co_rgb:333,w_500,c_fit/", $url);
+    }
+
     // ---- today_record / consecutive_days_achieved ----
 
     #[Test]
