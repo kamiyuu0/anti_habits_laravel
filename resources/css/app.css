@@ -5,5 +5,25 @@
 @source '../js';
 
 @plugin "daisyui" {
-    themes: light --default, dark --prefersdark, nord;
+    themes: nord --default, dim --prefersdark;
+}
+
+/* Tagify (タグ入力) をテーマ(ライト/ダーク)の配色に合わせる */
+.tagify {
+    --tags-border-color: var(--color-base-300);
+    --tags-hover-border-color: var(--color-base-content);
+    --tags-focus-border-color: var(--color-primary);
+    --tag-bg: var(--color-base-300);
+    --tag-hover: var(--color-base-300);
+    --tag-text-color: var(--color-base-content);
+    --tag-remove-btn-color: var(--color-base-content);
+    --input-color: var(--color-base-content);
+    --placeholder-color: color-mix(in oklab, var(--color-base-content) 50%, transparent);
+    --placeholder-color-focus: color-mix(in oklab, var(--color-base-content) 30%, transparent);
+}
+
+.tagify__dropdown__wrapper {
+    background: var(--color-base-100);
+    color: var(--color-base-content);
+    border-color: var(--color-base-300);
 }

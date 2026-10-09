@@ -3,9 +3,16 @@
     $siteDescription = '「Anti Habits」は、悪習慣排除を手助けするアプリです。';
 @endphp
 <!DOCTYPE html>
-<html lang="ja" data-theme="nord">
+<html lang="ja">
   <head>
     <meta charset="utf-8">
+    <script>
+      // 描画前にユーザーが選択したテーマを適用してちらつきを防ぐ (未選択なら OS の設定に従う)
+      try {
+        var theme = localStorage.getItem('theme');
+        if (theme === 'nord' || theme === 'dim') document.documentElement.dataset.theme = theme;
+      } catch (e) {}
+    </script>
     <title>Anti Habits</title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
