@@ -8,6 +8,10 @@
   </div>
 
   <div class="navbar-end">
+    <button type="button" class="btn btn-square btn-ghost" data-controller="theme" data-action="theme#toggle" aria-label="ダークモード切り替え">
+      <i class="fas fa-sun hidden" data-theme-target="sun"></i>
+      <i class="fas fa-moon" data-theme-target="moon"></i>
+    </button>
     <div class="dropdown dropdown-end">
       <div tabindex="0" role="button" class="btn btn-square btn-ghost">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" class="inline-block w-5 h-5 stroke-current">
