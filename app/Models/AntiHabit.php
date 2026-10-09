@@ -105,6 +105,27 @@ class AntiHabit extends Model
         $query->whereHas('tags', fn (Builder $q) => $q->whereIn('tags.name', (array) $names));
     }
 
+    /** タイトルまたは説明に部分一致 (大文字小文字を区別しない) */
+    public function scopeTitleOrDescriptionMatching(Builder $query, string $keyword): void
+    {
+        $like = self::likePattern($keyword);
+
+        $query->where(fn (Builder $q) => $q
+            ->where('anti_habits.title', 'ilike', $like)
+            ->orWhere('anti_habits.description', 'ilike', $like));
+    }
+
+    /** タイトルに部分一致 (大文字小文字を区別しない) */
+    public function scopeTitleMatching(Builder $query, string $keyword): void
+    {
+        $query->where('anti_habits.title', 'ilike', self::likePattern($keyword));
+    }
+
+    private static function likePattern(string $keyword): string
+    {
+        return '%'.addcslashes($keyword, '\\%_').'%';
+    }
+
     // ---- ライフサイクル ----
 
     protected static function booted(): void
@@ -259,6 +280,25 @@ class AntiHabit extends Model
         }
 
         return $data;
+    }
+
+    // ---- OGP ----
+
+    /** タイトルを埋め込んだ動的 OGP 画像の URL */
+    public function ogpImageUrl(): string
+    {
+        $fontSize = $this->ogpFontSize();
+
+        return "https://res.cloudinary.com/antihabits/image/upload/l_text:Sawarabi%20Gothic_{$fontSize}_solid:{$this->title},co_rgb:333,w_500,c_fit/v1757602327/anti_habits_dynamic_ogp_zyyjyk.png";
+    }
+
+    private function ogpFontSize(): string
+    {
+        return match (true) {
+            mb_strlen($this->title) > 15 => '25',
+            mb_strlen($this->title) > 10 => '30',
+            default => '50',
+        };
     }
 
     // ---- タグ ----
