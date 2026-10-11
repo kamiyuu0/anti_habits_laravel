@@ -18,10 +18,10 @@ return new class extends Migration
 
         Schema::create('solid_queue_blocked_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
-            $table->addColumn('string', 'queue_name');
+            $table->unsignedBigInteger('job_id');
+            $table->string('queue_name');
             $table->integer('priority')->default(0);
-            $table->addColumn('string', 'concurrency_key');
+            $table->string('concurrency_key');
             $table->timestamp('expires_at', 6);
             $table->timestamp('created_at', 6);
             $table->index(['concurrency_key', 'priority', 'job_id'], 'index_solid_queue_blocked_executions_for_release');
@@ -31,8 +31,8 @@ return new class extends Migration
 
         Schema::create('solid_queue_claimed_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
-            $table->bigInteger('process_id')->nullable();
+            $table->unsignedBigInteger('job_id');
+            $table->unsignedBigInteger('process_id')->nullable();
             $table->timestamp('created_at', 6);
             $table->index(['process_id', 'job_id'], 'index_solid_queue_claimed_executions_on_process_id_and_job_id');
         });
@@ -40,7 +40,7 @@ return new class extends Migration
 
         Schema::create('solid_queue_failed_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
+            $table->unsignedBigInteger('job_id');
             $table->text('error')->nullable();
             $table->timestamp('created_at', 6);
         });
@@ -48,14 +48,14 @@ return new class extends Migration
 
         Schema::create('solid_queue_jobs', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'queue_name');
-            $table->addColumn('string', 'class_name');
+            $table->string('queue_name');
+            $table->string('class_name');
             $table->text('arguments')->nullable();
             $table->integer('priority')->default(0);
-            $table->addColumn('string', 'active_job_id')->nullable();
+            $table->string('active_job_id')->nullable();
             $table->timestamp('scheduled_at', 6)->nullable();
             $table->timestamp('finished_at', 6)->nullable();
-            $table->addColumn('string', 'concurrency_key')->nullable();
+            $table->string('concurrency_key')->nullable();
             $table->timestamp('created_at', 6);
             $table->timestamp('updated_at', 6);
             $table->index('active_job_id', 'index_solid_queue_jobs_on_active_job_id');
@@ -67,21 +67,21 @@ return new class extends Migration
 
         Schema::create('solid_queue_pauses', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'queue_name');
+            $table->string('queue_name');
             $table->timestamp('created_at', 6);
         });
         rails_unique_index('solid_queue_pauses', 'queue_name', 'index_solid_queue_pauses_on_queue_name');
 
         Schema::create('solid_queue_processes', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'kind');
+            $table->string('kind');
             $table->timestamp('last_heartbeat_at', 6);
-            $table->bigInteger('supervisor_id')->nullable();
+            $table->unsignedBigInteger('supervisor_id')->nullable();
             $table->integer('pid');
-            $table->addColumn('string', 'hostname')->nullable();
+            $table->string('hostname')->nullable();
             $table->text('metadata')->nullable();
             $table->timestamp('created_at', 6);
-            $table->addColumn('string', 'name');
+            $table->string('name');
             $table->index('last_heartbeat_at', 'index_solid_queue_processes_on_last_heartbeat_at');
             $table->index('supervisor_id', 'index_solid_queue_processes_on_supervisor_id');
         });
@@ -89,8 +89,8 @@ return new class extends Migration
 
         Schema::create('solid_queue_ready_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
-            $table->addColumn('string', 'queue_name');
+            $table->unsignedBigInteger('job_id');
+            $table->string('queue_name');
             $table->integer('priority')->default(0);
             $table->timestamp('created_at', 6);
             $table->index(['priority', 'job_id'], 'index_solid_queue_poll_all');
@@ -100,8 +100,8 @@ return new class extends Migration
 
         Schema::create('solid_queue_recurring_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
-            $table->addColumn('string', 'task_key');
+            $table->unsignedBigInteger('job_id');
+            $table->string('task_key');
             $table->timestamp('run_at', 6);
             $table->timestamp('created_at', 6);
         });
@@ -110,12 +110,12 @@ return new class extends Migration
 
         Schema::create('solid_queue_recurring_tasks', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'key');
-            $table->addColumn('string', 'schedule');
+            $table->string('key');
+            $table->string('schedule');
             $table->string('command', 2048)->nullable();
-            $table->addColumn('string', 'class_name')->nullable();
+            $table->string('class_name')->nullable();
             $table->text('arguments')->nullable();
-            $table->addColumn('string', 'queue_name')->nullable();
+            $table->string('queue_name')->nullable();
             $table->integer('priority')->nullable()->default(0);
             $table->boolean('static')->default(true);
             $table->text('description')->nullable();
@@ -127,8 +127,8 @@ return new class extends Migration
 
         Schema::create('solid_queue_scheduled_executions', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('job_id');
-            $table->addColumn('string', 'queue_name');
+            $table->unsignedBigInteger('job_id');
+            $table->string('queue_name');
             $table->integer('priority')->default(0);
             $table->timestamp('scheduled_at', 6);
             $table->timestamp('created_at', 6);
@@ -138,7 +138,7 @@ return new class extends Migration
 
         Schema::create('solid_queue_semaphores', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'key');
+            $table->string('key');
             $table->integer('value')->default(1);
             $table->timestamp('expires_at', 6);
             $table->timestamp('created_at', 6);
