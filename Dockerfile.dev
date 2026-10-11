@@ -4,8 +4,8 @@ ENV LANG=C.UTF-8 \
     TZ=Asia/Tokyo
 
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y git unzip curl ca-certificates libpq-dev libicu-dev libzip-dev \
-    && docker-php-ext-install pdo_pgsql intl zip \
+    && apt-get install --no-install-recommends -y git unzip curl ca-certificates libicu-dev libzip-dev \
+    && docker-php-ext-install pdo_mysql intl zip \
     && curl -fsSL https://deb.nodesource.com/setup_22.x | bash - \
     && apt-get install --no-install-recommends -y nodejs \
     && rm -rf /var/lib/apt/lists/*

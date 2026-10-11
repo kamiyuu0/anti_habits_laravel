@@ -184,7 +184,7 @@ Anti Habitsは他のユーザーから擬似的に監視されている感覚を
 | フロントエンド | Tailwind CSS / DaisyUI / Hotwire (Turbo・Stimulus) / Vite | 
 | バックエンド | PHP 8.3 / Laravel 13 | 
 | インフラ | Render / Cloudinary(動的OGP画像生成) | 
-| データベース | PostgreSQL |
+| データベース | MySQL |
 | 環境構築 | Docker | 
 | CI/CD | GitHub Actions | 
 
@@ -233,7 +233,7 @@ docker compose up
 初回起動時に `.env` の作成・マイグレーションまで自動で行います。開発用データは `docker compose exec web php artisan db:seed` で投入できます。
 
 ### ローカルの PHP / Node.js を使う場合
-PostgreSQL が必要です。手元に無い場合は DB だけ Docker で起動してください（`127.0.0.1:5432` で接続できます）。
+MySQL が必要です。手元に無い場合は DB だけ Docker で起動してください（`127.0.0.1:3306` で接続できます）。
 ```bash
 docker compose up -d db
 ```
@@ -250,7 +250,7 @@ php artisan schedule:work   # LINE 通知の定期実行を試す場合
 
 ### テスト・Lint
 ```bash
-php artisan test        # PostgreSQL の anti_habits_test データベースを使用
+php artisan test        # MySQL の anti_habits_test データベースを使用
 vendor/bin/pint --test
 ```
 

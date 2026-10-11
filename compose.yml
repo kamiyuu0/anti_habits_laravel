@@ -1,17 +1,17 @@
 services:
     db:
-        image: postgres
+        image: mysql:8.4
         restart: always
         environment:
             TZ: Asia/Tokyo
-            POSTGRES_PASSWORD: password
-            POSTGRES_DB: myapp_development
+            MYSQL_ROOT_PASSWORD: password
+            MYSQL_DATABASE: myapp_development
         volumes:
-            - postgresql_data:/var/lib/postgresql
+            - mysql_data:/var/lib/mysql
         ports:
-            - 5432:5432
+            - 3306:3306
         healthcheck:
-            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-ppassword"]
             interval: 10s
             timeout: 5s
             retries: 5
@@ -36,6 +36,6 @@ services:
             db:
                 condition: service_healthy
 volumes:
-    postgresql_data:
+    mysql_data:
     vendor:
     node_modules:

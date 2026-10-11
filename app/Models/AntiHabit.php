@@ -111,14 +111,14 @@ class AntiHabit extends Model
         $like = self::likePattern($keyword);
 
         $query->where(fn (Builder $q) => $q
-            ->where('anti_habits.title', 'ilike', $like)
-            ->orWhere('anti_habits.description', 'ilike', $like));
+            ->where('anti_habits.title', 'like', $like)
+            ->orWhere('anti_habits.description', 'like', $like));
     }
 
     /** タイトルに部分一致 (大文字小文字を区別しない) */
     public function scopeTitleMatching(Builder $query, string $keyword): void
     {
-        $query->where('anti_habits.title', 'ilike', self::likePattern($keyword));
+        $query->where('anti_habits.title', 'like', self::likePattern($keyword));
     }
 
     private static function likePattern(string $keyword): string

@@ -1,6 +1,7 @@
 <?php
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
 
 if (! function_exists('rails_fk_name')) {
     /**
@@ -19,8 +20,6 @@ if (! function_exists('rails_unique_index')) {
      */
     function rails_unique_index(string $table, array|string $columns, string $name): void
     {
-        $columns = implode(', ', array_map(fn ($c) => "\"{$c}\"", (array) $columns));
-
-        DB::statement("create unique index \"{$name}\" on \"{$table}\" ({$columns})");
+        Schema::table($table, fn (Blueprint $blueprint) => $blueprint->unique((array) $columns, $name));
     }
 }

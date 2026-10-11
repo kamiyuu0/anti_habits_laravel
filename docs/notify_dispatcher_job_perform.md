@@ -8,7 +8,7 @@
 flowchart TD
     A[Sidekiq-cronにより<br>ジョブ実行] --> B[現在UTC時刻を取得<br>秒を0に丸める]
 
-    B --> C["PostgreSQLのtime型に合わせて<br>target_timeを生成<br>例: 2000-01-01 09:00:00"]
+    B --> C["MySQLのtime型に合わせて<br>target_timeを生成<br>例: 2000-01-01 09:00:00"]
 
     C --> D[AntiHabitをJOINで検索<br>notification_enabled: true<br>notification_time: target_time]
 
