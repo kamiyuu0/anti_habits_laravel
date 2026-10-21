@@ -22,7 +22,7 @@ COPY . .
 RUN composer dump-autoload --optimize --no-dev --no-scripts
 
 # ---- 実行環境 ----
-FROM php:8.3-apache
+FROM php:8.3.36-apache
 
 RUN apt-get update -qq \
     && apt-get install --no-install-recommends -y libpq-dev libicu-dev libzip-dev \
@@ -38,6 +38,9 @@ RUN sed -ri 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-avail
     && sed -ri 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf \
     && a2enmod rewrite \
     && mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+# php2shell (CVE-2026-109618/109619) の暫定緩和。根本対策は PHP 8.3.36 以上の使用
+RUN echo "session.upload_progress.enabled = Off" > "$PHP_INI_DIR/conf.d/zz-security.ini"
 
 WORKDIR /var/www/html
 COPY --from=vendor /app ./
