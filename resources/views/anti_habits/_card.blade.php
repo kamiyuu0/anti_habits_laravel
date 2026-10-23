@@ -4,7 +4,7 @@
     <!-- ブックマークボタン（右上） -->
     @if (auth()->check() && auth()->user()->canBookmark($antiHabit))
       <div class="absolute top-4 right-4">
-        @include('shared.bookmark_button', ['antiHabit' => $antiHabit])
+        <livewire:bookmark-button :anti-habit="$antiHabit" :key="'bookmark-'.$antiHabit->id" />
       </div>
     @endif
 
@@ -76,7 +76,7 @@
     <!-- リアクションボタン -->
     @auth
       <div class="flex items-center mt-4 space-x-1">
-        @include('shared.reaction_buttons', ['antiHabit' => $antiHabit])
+        <livewire:reaction-buttons :anti-habit="$antiHabit" :key="'reactions-'.$antiHabit->id" />
         <div class="flex items-center space-x-1">
           <i class="fas fa-comment"></i>
           {{ $antiHabit->comments_count }}

@@ -50,9 +50,7 @@
 
   <!-- タグ -->
   <div class="form-control"
-       data-controller="tagify"
-       data-tagify-tags-url-value="{{ route('tags.index') }}"
-       data-tagify-initial-value-value="{{ $tagNames }}">
+       x-data="tagify({ tagsUrl: @js(route('tags.index')), initial: @js($tagNames) })">
     <div class="label">
       <span class="label-text font-semibold">タグ</span>
     </div>

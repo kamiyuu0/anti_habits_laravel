@@ -1,4 +1,3 @@
-import { Controller } from '@hotwired/stimulus';
 import { isDark } from '../lib/theme';
 
 // ECharts は CSS 変数を解釈できないため、テーマごとの配色をここで持つ
@@ -6,28 +5,28 @@ const PALETTES = {
     light: { empty: '#d8dee9', filled: '#216e39', split: '#d8dee9', text: '#6e7079', tooltipBg: '#ffffff', tooltipText: '#464646' },
     dark: { empty: '#3d4451', filled: '#39d353', split: '#3d4451', text: '#a6adbb', tooltipBg: '#1d232a', tooltipText: '#d1d5db' },
 };
-// 活動記録ヒートマップ (Rails 版の rails_charts calendar_chart 相当)
-export default class extends Controller {
-    static values = {
-        data: Array,
-        start: String,
-        end: String,
-    };
 
-    async connect() {
+// 活動記録ヒートマップ (Rails 版の rails_charts calendar_chart 相当)
+export default ({ data, start, end }) => ({
+    chart: null,
+    destroyed: false,
+
+    async init() {
         // ECharts はサイズが大きいため、ヒートマップを表示するページでのみ読み込む
         const { default: echarts } = await import('../lib/echarts_calendar');
-        if (!this.element.isConnected) return;
+        if (this.destroyed) return;
 
-        this.chart = echarts.init(this.element);
+        this.chart = echarts.init(this.$el);
         this.chart.setOption(this.buildOption());
+    },
 
-        this.resize = () => this.chart.resize();
-        window.addEventListener('resize', this.resize);
+    resize() {
+        this.chart?.resize();
+    },
 
-        this.applyTheme = () => this.chart.setOption(this.buildOption());
-        document.addEventListener('theme:changed', this.applyTheme);
-    }
+    applyTheme() {
+        this.chart?.setOption(this.buildOption());
+    },
 
     buildOption() {
         const palette = isDark() ? PALETTES.dark : PALETTES.light;
@@ -50,7 +49,7 @@ export default class extends Controller {
                 left: 'center',
                 right: 10,
                 cellSize: ['auto', 13],
-                range: [this.startValue, this.endValue],
+                range: [start, end],
                 // 日ごとのセル背後の塗り(既定は白)を消し、セル間の隙間をカード背景のままにする
                 itemStyle: { color: 'transparent', borderWidth: 3, borderColor: 'transparent' },
                 yearLabel: { show: false },
@@ -67,13 +66,12 @@ export default class extends Controller {
                 },
                 splitLine: { show: true, lineStyle: { color: palette.split, width: 1 } },
             },
-            series: [{ type: 'heatmap', coordinateSystem: 'calendar', data: this.dataValue }],
+            series: [{ type: 'heatmap', coordinateSystem: 'calendar', data }],
         };
-    }
+    },
 
-    disconnect() {
-        window.removeEventListener('resize', this.resize);
-        document.removeEventListener('theme:changed', this.applyTheme);
+    destroy() {
+        this.destroyed = true;
         this.chart?.dispose();
-    }
-}
+    },
+});

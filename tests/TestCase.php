@@ -12,9 +12,4 @@ abstract class TestCase extends BaseTestCase
     {
         $this->travelTo(CarbonImmutable::parse($datetime, config('app.display_timezone')));
     }
-
-    protected function turboStreamHeaders(): array
-    {
-        return ['Accept' => 'text/vnd.turbo-stream.html, text/html, application/xhtml+xml'];
-    }
 }

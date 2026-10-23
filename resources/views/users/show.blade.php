@@ -23,7 +23,7 @@
         <!-- ユーザー編集ボタン -->
         <div class="flex flex-col gap-2 w-full sm:w-auto">
           <a href="{{ route('registration.edit') }}" class="btn btn-outline btn-sm w-full">プロフィール編集</a>
-          <form action="{{ route('line.redirect') }}" method="post" data-turbo="false">
+          <form action="{{ route('line.redirect') }}" method="post">
             @csrf
             <button type="submit" class="btn btn-success btn-sm w-full">LINEで認証</button>
           </form>

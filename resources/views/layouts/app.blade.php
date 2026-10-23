@@ -38,6 +38,7 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
     <link href="https://use.fontawesome.com/releases/v5.15.1/css/all.css" rel="stylesheet">
 
     @production
@@ -62,5 +63,6 @@
       @yield('content')
     </main>
     @include('shared.footer')
+    @livewireScripts
   </body>
 </html>

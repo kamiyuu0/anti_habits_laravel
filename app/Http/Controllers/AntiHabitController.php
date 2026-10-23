@@ -34,22 +34,6 @@ class AntiHabitController extends Controller
         ]);
     }
 
-    public function autocomplete(Request $request)
-    {
-        $query = trim((string) $request->input('q'));
-
-        $antiHabits = $query === ''
-            ? collect()
-            : AntiHabit::query()
-                ->publiclyVisible()
-                ->titleMatching($query)
-                ->recent()
-                ->limit(10)
-                ->get();
-
-        return view('anti_habits._autocomplete_result', ['antiHabits' => $antiHabits]);
-    }
-
     public function create()
     {
         return view('anti_habits.create', ['antiHabit' => new AntiHabit]);
@@ -81,7 +65,6 @@ class AntiHabitController extends Controller
             'antiHabit' => $antiHabit,
             'isOwner' => $isOwner,
             'todayRecord' => $isOwner ? $antiHabit->todayRecord() : null,
-            'comments' => $antiHabit->comments()->with('user')->latest()->get(),
             'calendarData' => $isOwner ? $antiHabit->calendarData(90) : null,
             'ogpImageUrl' => $antiHabit->ogpImageUrl(),
         ]);

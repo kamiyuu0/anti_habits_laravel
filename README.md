@@ -181,7 +181,7 @@ Anti Habitsは他のユーザーから擬似的に監視されている感覚を
 ## 技術構成
 | カテゴリ | 使用技術 | 
 | --- | --- | 
-| フロントエンド | Tailwind CSS / DaisyUI / Hotwire (Turbo・Stimulus) / Vite | 
+| フロントエンド | Tailwind CSS / DaisyUI / Livewire / Alpine.js / Vite | 
 | バックエンド | PHP 8.3 / Laravel 13 | 
 | インフラ | Laravel Cloud / Cloudinary(動的OGP画像生成) | 
 | データベース | MySQL |
@@ -201,7 +201,7 @@ Anti Habitsは他のユーザーから擬似的に監視されている感覚を
 
 #### UI/UXデザイン
 * Tailwind CSS / DaisyUI - UIデザイン・スタイリング
-* Hotwire (Turbo / Stimulus) - 非同期通信の簡易化とインタラクティブな機能
+* Livewire / Alpine.js - 非同期通信の簡易化とインタラクティブな機能
 
 #### フロントエンドツール
 * Vite - JavaScript/CSS バンドラー
