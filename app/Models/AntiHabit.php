@@ -3,8 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ReactionKind;
+use App\Queries\WeeklyAchieversRanking;
 use App\Support\AppTime;
-use Carbon\CarbonInterface;
 use Carbon\CarbonPeriod;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -13,7 +13,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class AntiHabit extends Model
 {
@@ -162,49 +161,7 @@ class AntiHabit extends Model
      */
     public static function topWeeklyAchieversWithRanks(): array
     {
-        $today = AppTime::today();
-        $startOfWeek = $today->startOfWeek(CarbonInterface::MONDAY);
-        $endOfWeek = $today->min($startOfWeek->addDays(6));
-
-        $weeklyCounts = DB::table('anti_habit_records')
-            ->select('anti_habit_id', DB::raw('COUNT(*) AS count'))
-            ->whereBetween('recorded_on', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
-            ->groupBy('anti_habit_id');
-
-        $candidates = static::query()
-            ->publiclyVisible()
-            ->with('user')
-            ->joinSub($weeklyCounts, 'weekly', 'weekly.anti_habit_id', '=', 'anti_habits.id')
-            ->select('anti_habits.*', 'weekly.count AS weekly_days_count')
-            ->orderByDesc('weekly.count')
-            ->get();
-
-        $grouped = $candidates
-            ->groupBy(fn (AntiHabit $a) => (int) $a->weekly_days_count)
-            ->sortKeysDesc();
-
-        $rankedData = [];
-        $currentRank = 1;
-        foreach ($grouped as $days => $antiHabits) {
-            $rankedData[] = [
-                'rank' => $currentRank,
-                'weekly_days' => (int) $days,
-                'anti_habits' => $antiHabits->sortBy('created_at')->values(),
-            ];
-            $currentRank += $antiHabits->count();
-        }
-
-        $firstPlaceCount = isset($rankedData[0]) ? $rankedData[0]['anti_habits']->count() : 0;
-        if ($firstPlaceCount >= 3) {
-            return array_slice($rankedData, 0, 1);
-        }
-
-        $firstTwoCount = collect(array_slice($rankedData, 0, 2))->sum(fn ($d) => $d['anti_habits']->count());
-        if ($firstTwoCount >= 3) {
-            return array_slice($rankedData, 0, 2);
-        }
-
-        return array_slice($rankedData, 0, 3);
+        return (new WeeklyAchieversRanking)->get();
     }
 
     // ---- 記録・目標 ----
