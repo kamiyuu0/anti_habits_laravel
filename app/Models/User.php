@@ -143,19 +143,12 @@ class User extends Model implements AuthenticatableContract
 
     public function unreaction(AntiHabit $antiHabit, ReactionKind $kind): void
     {
-        $this->reactions()
-            ->where('anti_habit_id', $antiHabit->id)
-            ->where('reaction_kind', $kind->value)
-            ->first()
-            ?->delete();
+        $this->reactionsFor($antiHabit, $kind)->first()?->delete();
     }
 
     public function hasReacted(AntiHabit $antiHabit, ReactionKind $kind): bool
     {
-        return $this->reactions()
-            ->where('anti_habit_id', $antiHabit->id)
-            ->where('reaction_kind', $kind->value)
-            ->exists();
+        return $this->reactionsFor($antiHabit, $kind)->exists();
     }
 
     public function bookmark(AntiHabit $antiHabit): Bookmark
@@ -165,16 +158,28 @@ class User extends Model implements AuthenticatableContract
 
     public function unbookmark(AntiHabit $antiHabit): void
     {
-        $this->bookmarks()->where('anti_habit_id', $antiHabit->id)->first()?->delete();
+        $this->bookmarksFor($antiHabit)->first()?->delete();
     }
 
     public function hasBookmarked(AntiHabit $antiHabit): bool
     {
-        return $this->bookmarks()->where('anti_habit_id', $antiHabit->id)->exists();
+        return $this->bookmarksFor($antiHabit)->exists();
     }
 
     public function canBookmark(AntiHabit $antiHabit): bool
     {
         return $antiHabit->is_public && ! $this->own($antiHabit);
+    }
+
+    private function reactionsFor(AntiHabit $antiHabit, ReactionKind $kind): HasMany
+    {
+        return $this->reactions()
+            ->where('anti_habit_id', $antiHabit->id)
+            ->where('reaction_kind', $kind->value);
+    }
+
+    private function bookmarksFor(AntiHabit $antiHabit): HasMany
+    {
+        return $this->bookmarks()->where('anti_habit_id', $antiHabit->id);
     }
 }

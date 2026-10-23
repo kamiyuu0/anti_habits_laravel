@@ -37,10 +37,6 @@ class BookmarkController extends Controller
 
     private function respond(Request $request, AntiHabit $antiHabit)
     {
-        if (! $this->wantsTurboStream($request)) {
-            return back(303);
-        }
-
-        return $this->turboStream('bookmarks.update', ['antiHabit' => $antiHabit]);
+        return $this->respondToggle($request, 'bookmarks.update', ['antiHabit' => $antiHabit]);
     }
 }

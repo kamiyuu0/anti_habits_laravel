@@ -3,9 +3,10 @@
 namespace App\Models;
 
 use App\Enums\ReactionKind;
+use App\Queries\WeeklyAchieversRanking;
 use App\Support\AppTime;
-use Carbon\CarbonInterface;
-use Carbon\CarbonPeriod;
+use App\Support\OgpImage;
+use App\Support\RecordHistory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,7 +14,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
 class AntiHabit extends Model
 {
@@ -83,6 +83,14 @@ class AntiHabit extends Model
         return $this->hasMany(Bookmark::class);
     }
 
+    // ---- 閲覧権限 ----
+
+    /** 公開中、または本人であれば閲覧できる */
+    public function isVisibleTo(?User $user): bool
+    {
+        return $this->is_public || ($user?->own($this) ?? false);
+    }
+
     // ---- スコープ ----
 
     public function scopePubliclyVisible(Builder $query): void
@@ -121,6 +129,14 @@ class AntiHabit extends Model
         $query->where('anti_habits.title', 'like', self::likePattern($keyword));
     }
 
+    /** キーワード (タイトル/説明の部分一致) とタグ名での絞り込み。空の条件は無視する */
+    public function scopeSearchedBy(Builder $query, string $keyword = '', string $tagName = ''): void
+    {
+        $query
+            ->when($keyword !== '', fn (Builder $q) => $q->titleOrDescriptionMatching($keyword))
+            ->when($tagName !== '', fn (Builder $q) => $q->taggedWith($tagName));
+    }
+
     private static function likePattern(string $keyword): string
     {
         return '%'.addcslashes($keyword, '\\%_').'%';
@@ -154,49 +170,7 @@ class AntiHabit extends Model
      */
     public static function topWeeklyAchieversWithRanks(): array
     {
-        $today = AppTime::today();
-        $startOfWeek = $today->startOfWeek(CarbonInterface::MONDAY);
-        $endOfWeek = $today->min($startOfWeek->addDays(6));
-
-        $weeklyCounts = DB::table('anti_habit_records')
-            ->select('anti_habit_id', DB::raw('COUNT(*) AS count'))
-            ->whereBetween('recorded_on', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
-            ->groupBy('anti_habit_id');
-
-        $candidates = static::query()
-            ->publiclyVisible()
-            ->with('user')
-            ->joinSub($weeklyCounts, 'weekly', 'weekly.anti_habit_id', '=', 'anti_habits.id')
-            ->select('anti_habits.*', 'weekly.count AS weekly_days_count')
-            ->orderByDesc('weekly.count')
-            ->get();
-
-        $grouped = $candidates
-            ->groupBy(fn (AntiHabit $a) => (int) $a->weekly_days_count)
-            ->sortKeysDesc();
-
-        $rankedData = [];
-        $currentRank = 1;
-        foreach ($grouped as $days => $antiHabits) {
-            $rankedData[] = [
-                'rank' => $currentRank,
-                'weekly_days' => (int) $days,
-                'anti_habits' => $antiHabits->sortBy('created_at')->values(),
-            ];
-            $currentRank += $antiHabits->count();
-        }
-
-        $firstPlaceCount = isset($rankedData[0]) ? $rankedData[0]['anti_habits']->count() : 0;
-        if ($firstPlaceCount >= 3) {
-            return array_slice($rankedData, 0, 1);
-        }
-
-        $firstTwoCount = collect(array_slice($rankedData, 0, 2))->sum(fn ($d) => $d['anti_habits']->count());
-        if ($firstTwoCount >= 3) {
-            return array_slice($rankedData, 0, 2);
-        }
-
-        return array_slice($rankedData, 0, 3);
+        return (new WeeklyAchieversRanking)->get();
     }
 
     // ---- 記録・目標 ----
@@ -209,25 +183,7 @@ class AntiHabit extends Model
     /** 今日 (未記録なら昨日) から遡った連続記録日数 */
     public function consecutiveDaysAchieved(): int
     {
-        $startDate = $this->todayRecord() ? AppTime::today() : AppTime::yesterday();
-
-        $records = $this->antiHabitRecords()
-            ->where('recorded_on', '<=', $startDate->toDateString())
-            ->orderByDesc('recorded_on')
-            ->pluck('recorded_on');
-
-        $count = 0;
-        $expectedDate = $startDate;
-
-        foreach ($records as $recordedOn) {
-            if ($recordedOn->toDateString() !== $expectedDate->toDateString()) {
-                break;
-            }
-            $count++;
-            $expectedDate = $expectedDate->subDay();
-        }
-
-        return $count;
+        return (new RecordHistory($this))->consecutiveDays();
     }
 
     public function goalReached(): bool
@@ -264,22 +220,7 @@ class AntiHabit extends Model
      */
     public function calendarData(int $days = 90): array
     {
-        $endDate = AppTime::today();
-        $startDate = $endDate->subDays($days - 1);
-
-        $recordedDates = $this->antiHabitRecords()
-            ->whereBetween('recorded_on', [$startDate->toDateString(), $endDate->toDateString()])
-            ->pluck('recorded_on')
-            ->map(fn ($date) => $date->toDateString())
-            ->flip();
-
-        $data = [];
-        foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
-            $key = $date->toDateString();
-            $data[] = [$key, $recordedDates->has($key) ? 1 : 0];
-        }
-
-        return $data;
+        return (new RecordHistory($this))->calendar($days);
     }
 
     // ---- OGP ----
@@ -287,18 +228,7 @@ class AntiHabit extends Model
     /** タイトルを埋め込んだ動的 OGP 画像の URL */
     public function ogpImageUrl(): string
     {
-        $fontSize = $this->ogpFontSize();
-
-        return "https://res.cloudinary.com/antihabits/image/upload/l_text:Sawarabi%20Gothic_{$fontSize}_solid:{$this->title},co_rgb:333,w_500,c_fit/v1757602327/anti_habits_dynamic_ogp_zyyjyk.png";
-    }
-
-    private function ogpFontSize(): string
-    {
-        return match (true) {
-            mb_strlen($this->title) > 15 => '25',
-            mb_strlen($this->title) > 10 => '30',
-            default => '50',
-        };
+        return OgpImage::urlFor($this->title);
     }
 
     // ---- タグ ----

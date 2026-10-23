@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Http\Requests\AntiHabitRequest;
 use App\Models\AntiHabit;
 use App\Models\Tag;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -21,8 +20,7 @@ class AntiHabitController extends Controller
 
         $antiHabits = AntiHabit::query()
             ->publiclyVisible()
-            ->when($keyword !== '', fn (Builder $query) => $query->titleOrDescriptionMatching($keyword))
-            ->when($tagName !== '', fn (Builder $query) => $query->taggedWith($tagName))
+            ->searchedBy($keyword, $tagName)
             ->withAssociations()
             ->recent()
             ->paginate(self::PER_PAGE)
@@ -75,7 +73,7 @@ class AntiHabitController extends Controller
         $user = $request->user();
         $isOwner = $user?->own($antiHabit) ?? false;
 
-        if (! $antiHabit->is_public && ! $isOwner) {
+        if (! $antiHabit->isVisibleTo($user)) {
             return redirect()->route('anti_habits.index')->with('alert', 'このページにアクセスする権限がありません。');
         }
 
