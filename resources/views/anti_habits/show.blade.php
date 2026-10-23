@@ -11,7 +11,7 @@
       <!-- ブックマークボタン（右上） -->
       @if ($currentUser?->canBookmark($antiHabit))
         <div class="absolute top-4 right-4">
-          @include('shared.bookmark_button', ['antiHabit' => $antiHabit])
+          <livewire:bookmark-button :anti-habit="$antiHabit" :key="'bookmark-'.$antiHabit->id" />
         </div>
       @endif
 
@@ -75,10 +75,9 @@
                 活動記録（過去3ヶ月間）
               </h2>
               <div style="height: 180px; width: 100%;"
-                   data-controller="calendar-chart"
-                   data-calendar-chart-data-value='@json($calendarData)'
-                   data-calendar-chart-start-value="{{ $calendarData[0][0] }}"
-                   data-calendar-chart-end-value="{{ $calendarData[count($calendarData) - 1][0] }}"></div>
+                   x-data="calendarChart({ data: @js($calendarData), start: @js($calendarData[0][0]), end: @js($calendarData[count($calendarData) - 1][0]) })"
+                   x-on:resize.window="resize"
+                   x-on:theme:changed.document="applyTheme"></div>
             </div>
           </div>
         </div>
@@ -121,7 +120,7 @@
                   <span class="text-2xl">💪</span>
                   <span class="font-bold text-lg">我慢できた</span>
                 </div>
-                <form action="{{ route('anti_habit_records.destroy', $todayRecord) }}" method="post" data-turbo-confirm="記録を削除しますか？">
+                <form action="{{ route('anti_habit_records.destroy', $todayRecord) }}" method="post" onsubmit="return confirm('記録を削除しますか？')">
                   @csrf
                   @method('DELETE')
                   <button type="submit" class="btn btn-neutral btn-sm mt-3">記録を削除</button>
@@ -156,7 +155,7 @@
             <dialog id="line_auth_modal" class="modal">
               <div class="modal-box">
                 <p class="py-4">LINE通知にするにはLINE認証してください。</p>
-                <form action="{{ route('line.redirect') }}" method="post" data-turbo="false">
+                <form action="{{ route('line.redirect') }}" method="post">
                   @csrf
                   <button type="submit" class="btn btn-success btn-sm w-full">LINEで認証</button>
                 </form>
@@ -173,7 +172,7 @@
                class="btn btn-outline btn-neutral">Xでシェアする</a>
           @endif
           <a href="{{ route('anti_habits.edit', $antiHabit) }}" class="btn btn-outline btn-primary">編集</a>
-          <form action="{{ route('anti_habits.destroy', $antiHabit) }}" method="post" class="inline" data-turbo-confirm="本当に削除しますか？">
+          <form action="{{ route('anti_habits.destroy', $antiHabit) }}" method="post" class="inline" onsubmit="return confirm('本当に削除しますか？')">
             @csrf
             @method('DELETE')
             <button type="submit" class="btn btn-outline btn-error">削除</button>
@@ -184,12 +183,12 @@
       <!-- リアクションボタン（公開時のみ表示） -->
       @if ($currentUser && $antiHabit->is_public)
         <div class="mt-4">
-          @include('shared.reaction_buttons', ['antiHabit' => $antiHabit])
+          <livewire:reaction-buttons :anti-habit="$antiHabit" :key="'reactions-'.$antiHabit->id" />
         </div>
         <div class="flex items-center mt-2 space-x-4">
           <div class="flex items-center space-x-1">
             <i class="fas fa-comment"></i>
-            <span id="comments-count">{{ $antiHabit->comments_count }}</span>件
+            <livewire:comment-count :anti-habit="$antiHabit" />件
           </div>
         </div>
       @endif
@@ -200,39 +199,7 @@
   @if ($currentUser && $antiHabit->is_public)
     <div class="card bg-base-100 shadow-xl rounded-2xl border border-base-300">
       <div class="card-body p-8">
-        <h2 class="card-title text-2xl mb-6">
-          応援メッセージ
-          <div class="badge badge-neutral">
-            <span id="comments-count2">{{ $antiHabit->comments_count }}</span>件
-          </div>
-        </h2>
-
-        <!-- 新規コメントフォーム -->
-        <div class="mb-6">
-          @include('comments._form', ['antiHabit' => $antiHabit])
-        </div>
-
-        <!-- 既存コメント一覧 -->
-        <div class="space-y-4">
-          <div id="comments-list">
-            @forelse ($comments as $comment)
-              @include('comments._comment', ['comment' => $comment])
-            @empty
-              <div class="hero min-h-32">
-                <div class="hero-content text-center">
-                  <div>
-                    <p class="text-base-content/60 mb-2">
-                      まだ応援メッセージはありません
-                    </p>
-                    <p class="text-base-content/60 text-sm">
-                      最初の応援メッセージを投稿してみませんか？
-                    </p>
-                  </div>
-                </div>
-              </div>
-            @endforelse
-          </div>
-        </div>
+        <livewire:comments :anti-habit="$antiHabit" />
       </div>
     </div>
   @endif

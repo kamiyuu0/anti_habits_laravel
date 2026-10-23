@@ -13,26 +13,7 @@
     <div class="card bg-base-100 shadow-lg">
       <div class="card-body">
         <form action="{{ route('anti_habits.index') }}" method="get" class="space-y-4">
-          <div class="relative"
-               data-controller="autocomplete"
-               data-autocomplete-url-value="{{ route('anti_habits.autocomplete') }}"
-               data-autocomplete-min-length-value="1"
-               role="combobox">
-            <div class="join w-full">
-              <input type="search" name="q[title_or_description_cont]"
-                  placeholder="タイトルか説明文で検索..."
-                  class="input input-bordered join-item w-full"
-                  value="{{ request('q.title_or_description_cont') }}"
-                  data-autocomplete-target="input"
-                  data-action="input->autocomplete#onInput keydown->autocomplete#onKeydown blur->autocomplete#onBlur"
-                  autocomplete="off">
-              <input type="submit" value="検索" class="btn btn-primary join-item">
-            </div>
-            <ul class="list-group absolute z-10 w-full top-full mt-1 max-h-60 overflow-y-auto bg-base-100 shadow-lg rounded-lg border border-base-300"
-                data-autocomplete-target="results"
-                data-action="click->autocomplete#selectOption"
-                hidden></ul>
-          </div>
+          <livewire:anti-habit-search />
           <div class="mt-4">
             <label for="q_tags_name_in" class="label-text mb-2 block">タグで絞り込み</label>
             <select name="q[tags_name_in]" id="q_tags_name_in" class="select select-bordered w-full">

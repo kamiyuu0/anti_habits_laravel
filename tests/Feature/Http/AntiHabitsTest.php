@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Http;
 
+use App\Livewire\AntiHabitSearch;
 use App\Models\AntiHabit;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Js;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -72,12 +75,14 @@ class AntiHabitsTest extends TestCase
         AntiHabit::factory()->create(['title' => '夜更かし']);
         AntiHabit::factory()->private()->create(['title' => '夜食']);
 
-        $this->get('/anti_habits/autocomplete?q=夜')
-            ->assertOk()
-            ->assertSee('data-autocomplete-value="夜更かし"', false)
-            ->assertDontSee('夜食');
-
-        $this->assertSame('', trim($this->get('/anti_habits/autocomplete?q=')->getContent()));
+        Livewire::test(AntiHabitSearch::class)
+            ->set('query', '夜')
+            ->assertSee('夜更かし')
+            ->assertDontSee('夜食')
+            ->call('select', '夜更かし')
+            ->assertSet('query', '夜更かし')
+            ->set('query', '')
+            ->assertDontSee('夜更かし');
     }
 
     #[Test]
@@ -119,11 +124,11 @@ class AntiHabitsTest extends TestCase
         $antiHabit = AntiHabit::factory()->for($owner)->create();
 
         $this->actingAs($owner)->get("/anti_habits/{$antiHabit->id}")
-            ->assertSee('data-controller="calendar-chart"', false)
+            ->assertSee('x-data="calendarChart(', false)
             ->assertSee('我慢できた');
 
         $this->actingAs(User::factory()->create())->get("/anti_habits/{$antiHabit->id}")
-            ->assertDontSee('data-controller="calendar-chart"', false);
+            ->assertDontSee('x-data="calendarChart(', false);
     }
 
     // ---- create ----
@@ -213,7 +218,8 @@ class AntiHabitsTest extends TestCase
 
         $this->actingAs($owner)->get("/anti_habits/{$antiHabit->id}/edit")
             ->assertOk()
-            ->assertSee('data-tagify-initial-value-value="タグA, タグB"', false);
+            ->assertSee('x-data="tagify(', false)
+            ->assertSee(Js::from('タグA, タグB')->toHtml(), false);
 
         $this->actingAs($owner)
             ->patch("/anti_habits/{$antiHabit->id}", $this->validParams(['title' => '新しいタイトル', 'tag_names' => 'タグB, タグC']))

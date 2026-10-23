@@ -3,12 +3,15 @@
 namespace Tests\Feature\Refactoring;
 
 use App\Enums\ReactionKind;
+use App\Livewire\Comments;
+use App\Livewire\ReactionButtons;
 use App\Models\AntiHabit;
 use App\Models\Bookmark;
 use App\Models\NotificationSetting;
 use App\Models\Reaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -41,11 +44,14 @@ class CharacterizationTest extends TestCase
         $owner = User::factory()->create();
         $antiHabit = AntiHabit::factory()->private()->for($owner)->create();
 
-        $this->actingAs($owner)
-            ->post("/anti_habits/{$antiHabit->id}/comments", ['body' => 'メモ'], $this->turboStreamHeaders())
-            ->assertOk();
-        $this->actingAs($owner)
-            ->post("/anti_habits/{$antiHabit->id}/reactions", ['reaction_kind' => 'zen'], $this->turboStreamHeaders())
+        Livewire::actingAs($owner)
+            ->test(Comments::class, ['antiHabit' => $antiHabit])
+            ->set('body', 'メモ')
+            ->call('save')
+            ->assertHasNoErrors();
+        Livewire::actingAs($owner)
+            ->test(ReactionButtons::class, ['antiHabit' => $antiHabit])
+            ->call('toggle', 'zen')
             ->assertOk();
 
         $this->assertSame(1, $antiHabit->comments()->count());
@@ -75,23 +81,6 @@ class CharacterizationTest extends TestCase
         $this->assertFalse($user->hasReacted($antiHabit, ReactionKind::Fire));
         $this->assertTrue($user->hasReacted($antiHabit, ReactionKind::Zen));
         $this->assertTrue($other->hasReacted($antiHabit, ReactionKind::Fire));
-    }
-
-    #[Test]
-    public function turbo_stream_でないリアクションとブックマークは_303_で戻る(): void
-    {
-        $user = User::factory()->create();
-        $antiHabit = AntiHabit::factory()->create();
-
-        $this->actingAs($user)->from('/somewhere')
-            ->post("/anti_habits/{$antiHabit->id}/reactions", ['reaction_kind' => 'fire'])
-            ->assertStatus(303)->assertRedirect('/somewhere');
-        $this->actingAs($user)->from('/somewhere')
-            ->post("/anti_habits/{$antiHabit->id}/bookmarks")
-            ->assertStatus(303)->assertRedirect('/somewhere');
-        $this->actingAs($user)->from('/somewhere')
-            ->delete("/anti_habits/{$antiHabit->id}/bookmarks")
-            ->assertStatus(303)->assertRedirect('/somewhere');
     }
 
     // ---- ブックマーク ----

@@ -3,6 +3,10 @@
 namespace Tests\Feature\Http;
 
 use App\Enums\ReactionKind;
+use App\Livewire\BookmarkButton;
+use App\Livewire\CommentCount;
+use App\Livewire\Comments;
+use App\Livewire\ReactionButtons;
 use App\Models\AntiHabit;
 use App\Models\AntiHabitRecord;
 use App\Models\Comment;
@@ -10,6 +14,7 @@ use App\Models\NotificationSetting;
 use App\Models\Tag;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -70,21 +75,22 @@ class InteractionsTest extends TestCase
     // ---- コメント ----
 
     #[Test]
-    public function コメントを投稿すると_turbo_stream_で一覧と件数が更新される(): void
+    public function コメントを投稿すると一覧と件数が更新される(): void
     {
         $user = User::factory()->create(['name' => 'コメント者']);
         $antiHabit = AntiHabit::factory()->create();
 
-        $this->post("/anti_habits/{$antiHabit->id}/comments", ['body' => 'x'])->assertRedirect('/users/sign_in');
+        Livewire::test(Comments::class, ['antiHabit' => $antiHabit])->set('body', 'x')->call('save')->assertForbidden();
 
-        $this->actingAs($user)
-            ->post("/anti_habits/{$antiHabit->id}/comments", ['body' => '応援しています'], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertHeader('Content-Type', 'text/vnd.turbo-stream.html; charset=utf-8')
-            ->assertSee('<turbo-stream action="prepend" target="comments-list">', false)
+        Livewire::actingAs($user)
+            ->test(Comments::class, ['antiHabit' => $antiHabit])
+            ->set('body', '応援しています')
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertSet('body', '')
+            ->assertDispatched('comment-posted')
             ->assertSee('応援しています')
-            ->assertSee('コメント者')
-            ->assertSee('<turbo-stream action="update" target="comments-count">', false);
+            ->assertSee('コメント者');
 
         $this->assertSame(1, $antiHabit->fresh()->comments_count);
         $this->assertTrue(Comment::sole()->user->is($user));
@@ -95,11 +101,15 @@ class InteractionsTest extends TestCase
     {
         $antiHabit = AntiHabit::factory()->create();
 
-        $this->actingAs(User::factory()->create())
-            ->post("/anti_habits/{$antiHabit->id}/comments", ['body' => str_repeat('あ', 501)], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertSee('<turbo-stream action="replace" target="comment-form">', false)
-            ->assertSee('応援メッセージは500文字以内で入力してください');
+        Livewire::actingAs(User::factory()->create())
+            ->test(Comments::class, ['antiHabit' => $antiHabit])
+            ->set('body', str_repeat('あ', 501))
+            ->call('save')
+            ->assertHasErrors(['body' => 'max'])
+            ->assertSee('応援メッセージは500文字以内で入力してください')
+            ->set('body', '')
+            ->call('save')
+            ->assertHasErrors(['body' => 'required']);
 
         $this->assertSame(0, Comment::count());
     }
@@ -109,38 +119,56 @@ class InteractionsTest extends TestCase
     {
         $antiHabit = AntiHabit::factory()->private()->create();
 
-        $this->actingAs(User::factory()->create())
-            ->post("/anti_habits/{$antiHabit->id}/comments", ['body' => 'x'], $this->turboStreamHeaders())
+        Livewire::actingAs(User::factory()->create())
+            ->test(Comments::class, ['antiHabit' => $antiHabit])
+            ->set('body', 'x')
+            ->call('save')
             ->assertForbidden();
+
+        $this->assertSame(0, Comment::count());
+    }
+
+    #[Test]
+    public function コメント件数はコメント投稿イベントで更新される(): void
+    {
+        $antiHabit = AntiHabit::factory()->create();
+        $user = User::factory()->create();
+
+        $count = Livewire::test(CommentCount::class, ['antiHabit' => $antiHabit])->assertSet('antiHabit.comments_count', 0);
+
+        $antiHabit->comments()->make(['body' => 'a'])->user()->associate($user)->save();
+
+        $count->dispatch('comment-posted')->assertSet('antiHabit.comments_count', 1);
     }
 
     // ---- リアクション ----
 
     #[Test]
-    public function リアクションの付け外しは_turbo_stream_でボタンを差し替える(): void
+    public function リアクションの付け外しでボタンの表示が切り替わる(): void
     {
         $user = User::factory()->create();
         $antiHabit = AntiHabit::factory()->create();
-        $target = "reaction-fire-form-for-anti_habit-{$antiHabit->id}";
 
-        $this->actingAs($user)
-            ->post("/anti_habits/{$antiHabit->id}/reactions", ['reaction_kind' => 'fire'], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertSee("<turbo-stream action=\"replace\" target=\"{$target}\">", false)
+        Livewire::actingAs($user)
+            ->test(ReactionButtons::class, ['antiHabit' => $antiHabit])
+            ->assertSee('badge-dash', false)
+            ->call('toggle', 'fire')
             ->assertSee('badge-outline badge-primary', false);
         $this->assertTrue($user->hasReacted($antiHabit, ReactionKind::Fire));
 
-        $this->actingAs($user)
-            ->delete("/anti_habits/{$antiHabit->id}/reactions", ['reaction_kind' => 'fire'], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertSee('badge-dash', false);
+        Livewire::actingAs($user)
+            ->test(ReactionButtons::class, ['antiHabit' => $antiHabit])
+            ->call('toggle', 'fire')
+            ->assertDontSee('badge-outline badge-primary', false);
         $this->assertFalse($user->hasReacted($antiHabit, ReactionKind::Fire));
 
-        $this->actingAs($user)
-            ->post("/anti_habits/{$antiHabit->id}/reactions", ['reaction_kind' => 'unknown'], $this->turboStreamHeaders())
-            ->assertUnprocessable();
-        $this->actingAs($user)
-            ->post('/anti_habits/'.AntiHabit::factory()->private()->create()->id.'/reactions', ['reaction_kind' => 'fire'], $this->turboStreamHeaders())
+        Livewire::actingAs($user)
+            ->test(ReactionButtons::class, ['antiHabit' => $antiHabit])
+            ->call('toggle', 'unknown')
+            ->assertStatus(422);
+        Livewire::actingAs($user)
+            ->test(ReactionButtons::class, ['antiHabit' => AntiHabit::factory()->private()->create()])
+            ->call('toggle', 'fire')
             ->assertForbidden();
     }
 
@@ -154,25 +182,24 @@ class InteractionsTest extends TestCase
 
         $this->get('/bookmarks')->assertRedirect('/users/sign_in');
 
-        $this->actingAs($user)
-            ->post("/anti_habits/{$antiHabit->id}/bookmarks", [], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertSee("target=\"bookmark-button-for-anti_habit-{$antiHabit->id}\"", false)
+        $button = Livewire::actingAs($user)
+            ->test(BookmarkButton::class, ['antiHabit' => $antiHabit])
+            ->assertSee('far fa-bookmark', false)
+            ->call('toggle')
             ->assertSee('fas fa-bookmark', false);
         $this->actingAs($user)->get('/bookmarks')->assertOk()->assertSee('ブクマ対象');
 
-        $this->actingAs($user)
-            ->delete("/anti_habits/{$antiHabit->id}/bookmarks", [], $this->turboStreamHeaders())
-            ->assertOk()
-            ->assertSee('far fa-bookmark', false);
+        $button->call('toggle')->assertSee('far fa-bookmark', false);
         $this->actingAs($user)->get('/bookmarks')->assertSee('まだブックマークがありません');
 
         // 自分の投稿・非公開の投稿は不可
-        $this->actingAs($user)
-            ->post('/anti_habits/'.AntiHabit::factory()->for($user)->create()->id.'/bookmarks', [], $this->turboStreamHeaders())
+        Livewire::actingAs($user)
+            ->test(BookmarkButton::class, ['antiHabit' => AntiHabit::factory()->for($user)->create()])
+            ->call('toggle')
             ->assertForbidden();
-        $this->actingAs($user)
-            ->post('/anti_habits/'.AntiHabit::factory()->private()->create()->id.'/bookmarks', [], $this->turboStreamHeaders())
+        Livewire::actingAs($user)
+            ->test(BookmarkButton::class, ['antiHabit' => AntiHabit::factory()->private()->create()])
+            ->call('toggle')
             ->assertForbidden();
     }
 

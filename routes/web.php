@@ -7,9 +7,7 @@ use App\Http\Controllers\Auth\PasswordResetController;
 use App\Http\Controllers\Auth\RegistrationController;
 use App\Http\Controllers\Auth\SessionController;
 use App\Http\Controllers\BookmarkController;
-use App\Http\Controllers\CommentController;
 use App\Http\Controllers\NotificationSettingController;
-use App\Http\Controllers\ReactionController;
 use App\Http\Controllers\StaticPageController;
 use App\Http\Controllers\TagController;
 use App\Http\Controllers\UserController;
@@ -55,23 +53,14 @@ Route::prefix('users')->group(function () {
 });
 
 // ---- 悪習慣 ----
-Route::get('/anti_habits/autocomplete', [AntiHabitController::class, 'autocomplete'])->name('anti_habits.autocomplete');
 Route::resource('anti_habits', AntiHabitController::class)->only(['index', 'show']);
 Route::middleware('auth')->group(function () {
     Route::resource('anti_habits', AntiHabitController::class)->except(['index', 'show']);
-
-    Route::post('/anti_habits/{anti_habit}/comments', [CommentController::class, 'store'])->name('anti_habits.comments.store');
 
     Route::get('/anti_habits/{anti_habit}/notification_setting/new', [NotificationSettingController::class, 'create'])->name('anti_habits.notification_setting.create');
     Route::post('/anti_habits/{anti_habit}/notification_setting', [NotificationSettingController::class, 'store'])->name('anti_habits.notification_setting.store');
     Route::get('/anti_habits/{anti_habit}/notification_setting/edit', [NotificationSettingController::class, 'edit'])->name('anti_habits.notification_setting.edit');
     Route::match(['put', 'patch'], '/anti_habits/{anti_habit}/notification_setting', [NotificationSettingController::class, 'update'])->name('anti_habits.notification_setting.update');
-
-    Route::post('/anti_habits/{anti_habit}/reactions', [ReactionController::class, 'store'])->name('anti_habits.reactions.store');
-    Route::delete('/anti_habits/{anti_habit}/reactions', [ReactionController::class, 'destroy'])->name('anti_habits.reactions.destroy');
-
-    Route::post('/anti_habits/{anti_habit}/bookmarks', [BookmarkController::class, 'store'])->name('anti_habits.bookmarks.store');
-    Route::delete('/anti_habits/{anti_habit}/bookmarks', [BookmarkController::class, 'destroy'])->name('anti_habits.bookmarks.destroy');
 
     Route::post('/anti_habit_records', [AntiHabitRecordController::class, 'store'])->name('anti_habit_records.store');
     Route::delete('/anti_habit_records/{anti_habit_record}', [AntiHabitRecordController::class, 'destroy'])->name('anti_habit_records.destroy');
