@@ -261,7 +261,7 @@ vendor/bin/pint --test
 * 日時は Rails 版と同じく **UTC で保存**し、「今日」の判定や通知時刻の入力・表示は日本時間で行います（`notification_settings.notification_time` も Rails 版と同じく UTC で保存）。
 * URL は Rails 版と同じパスを維持しています（`/users/sign_in`, `/anti_habits/new`, LINE のコールバック `/users/auth/line/callback` など）。
 * 環境変数は Rails 版のもの（`DATABASE_URL`, `LINE_KEY`, `LINE_SECRET`, `LINE_CHANNEL_TOKEN`, `GMAIL_USERNAME`, `GMAIL_PASSWORD`）をそのまま利用でき、加えて `APP_KEY`（`php artisan key:generate --show` で生成）と `APP_URL` が必要です。
-* Rails 版で使っていた `solid_queue_*` テーブルはスキーマ互換のためマイグレーションに残していますが、Laravel 版では使用しません。
+* Rails 版で使っていた `solid_queue_*` テーブルは Laravel 版では使用しないため、`php artisan migrate` で削除されます（存在しない場合は何もしません）。
 * 本番は `Dockerfile` でビルドしたイメージ 1 つで Web サーバーとスケジューラ（LINE 通知）を起動します。
 
 ## ER図
