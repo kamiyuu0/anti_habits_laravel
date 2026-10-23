@@ -29,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
             return route('users.show', Auth::id());
         });
 
-        // Render などのリバースプロキシ配下で https を正しく判定する
+        // Laravel Cloud などのリバースプロキシ配下で https を正しく判定する
         $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions): void {

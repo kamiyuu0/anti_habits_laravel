@@ -1,8 +1,8 @@
 # syntax=docker/dockerfile:1
 
-# 本番用イメージ (Render などでの利用を想定)
+# 本番用イメージ (Laravel Cloud などでの利用を想定)
 # docker build -t anti-habits .
-# docker run -p 8080:8080 -e PORT=8080 -e APP_KEY=... -e DATABASE_URL=... anti-habits
+# docker run -p 8080:8080 -e PORT=8080 -e APP_KEY=... -e DB_URL=... anti-habits
 
 # ---- フロントエンドのビルド ----
 FROM node:22-slim AS assets
