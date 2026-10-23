@@ -18,16 +18,16 @@ return new class extends Migration
 
         Schema::create('users', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'email')->default('');
-            $table->addColumn('string', 'encrypted_password')->default('');
-            $table->addColumn('string', 'name')->default('');
-            $table->addColumn('string', 'reset_password_token')->nullable();
+            $table->string('email')->default('');
+            $table->string('encrypted_password')->default('');
+            $table->string('name')->default('');
+            $table->string('reset_password_token')->nullable();
             $table->timestamp('reset_password_sent_at', 6)->nullable();
             $table->timestamp('remember_created_at', 6)->nullable();
             $table->timestamp('created_at', 6);
             $table->timestamp('updated_at', 6);
-            $table->addColumn('string', 'provider')->nullable();
-            $table->addColumn('string', 'uid')->nullable();
+            $table->string('provider')->nullable();
+            $table->string('uid')->nullable();
 
         });
         rails_unique_index('users', 'email', 'index_users_on_email');

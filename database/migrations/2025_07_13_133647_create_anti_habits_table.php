@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('anti_habits', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'title')->nullable();
+            $table->string('title')->nullable();
             $table->text('description')->nullable();
             $table->unsignedBigInteger('user_id');
             $table->timestamp('created_at', 6);

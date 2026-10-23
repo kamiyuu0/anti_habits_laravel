@@ -14,7 +14,7 @@ return new class extends Migration
 
         Schema::create('tags', function (Blueprint $table) {
             $table->id();
-            $table->addColumn('string', 'name')->nullable();
+            $table->string('name')->nullable();
             $table->timestamp('created_at', 6);
             $table->timestamp('updated_at', 6);
 
