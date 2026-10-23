@@ -6,7 +6,7 @@ const PALETTES = {
     dark: { empty: '#3d4451', filled: '#39d353', split: '#3d4451', text: '#a6adbb', tooltipBg: '#1d232a', tooltipText: '#d1d5db' },
 };
 
-// 活動記録ヒートマップ (Rails 版の rails_charts calendar_chart 相当)
+// 活動記録ヒートマップ
 export default ({ data, start, end }) => ({
     chart: null,
     destroyed: false,

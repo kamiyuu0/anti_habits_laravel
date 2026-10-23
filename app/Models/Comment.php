@@ -26,7 +26,7 @@ class Comment extends Model
 
     protected static function booted(): void
     {
-        // Rails の counter_cache 相当 (anti_habits.comments_count)
+        // anti_habits.comments_count をカウンタキャッシュとして更新する
         static::created(function (Comment $comment) {
             DB::table('anti_habits')->where('id', $comment->anti_habit_id)->increment('comments_count');
         });

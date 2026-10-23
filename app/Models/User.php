@@ -112,7 +112,7 @@ class User extends Model implements AuthenticatableContract
 
     protected static function booted(): void
     {
-        // Rails の dependent: :destroy 相当
+        // 関連レコードを連動して削除する
         static::deleting(function (User $user) {
             $user->antiHabits()->get()->each->delete();
             $user->reactions()->delete();

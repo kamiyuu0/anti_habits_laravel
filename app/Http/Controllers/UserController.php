@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    /** マイページ (Rails 版と同様、URL の ID に関わらずログインユーザー自身を表示する) */
+    /** マイページ (URL の ID に関わらずログインユーザー自身を表示する) */
     public function show(Request $request)
     {
         $user = $request->user();

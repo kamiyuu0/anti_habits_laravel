@@ -11,7 +11,7 @@ use App\Support\AppTime;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Arr;
 
-/** Rails 版 db/seeds.rb と同じ開発用データを作成する */
+/** 開発用データを作成する */
 class DatabaseSeeder extends Seeder
 {
     public function run(): void

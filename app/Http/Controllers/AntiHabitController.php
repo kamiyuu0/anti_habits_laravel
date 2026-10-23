@@ -55,11 +55,12 @@ class AntiHabitController extends Controller
     {
         $antiHabit = AntiHabit::with(['tags', 'user'])->findOrFail($id);
         $user = $request->user();
-        $isOwner = $user?->own($antiHabit) ?? false;
 
         if (! $antiHabit->isVisibleTo($user)) {
             return redirect()->route('anti_habits.index')->with('alert', 'このページにアクセスする権限がありません。');
         }
+
+        $isOwner = $user?->own($antiHabit) ?? false;
 
         return view('anti_habits.show', [
             'antiHabit' => $antiHabit,

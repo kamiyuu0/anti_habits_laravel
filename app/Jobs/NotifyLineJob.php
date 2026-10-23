@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * 記録を促す LINE 通知を送る。
- * 5xx / 429 はリトライ、それ以外の 4xx は破棄する (Rails 版の retry_on / discard_on 相当)。
+ * 5xx / 429 はリトライ、それ以外の 4xx は破棄する。
  */
 class NotifyLineJob implements ShouldQueue
 {
@@ -22,7 +22,7 @@ class NotifyLineJob implements ShouldQueue
 
     public function __construct(public int $userId, public int $antiHabitId) {}
 
-    /** @return array<int, int> Rails の polynomially_longer に近い待ち時間 (秒) */
+    /** @return array<int, int> 試行回数の 4 乗 + 2 で増える待ち時間 (秒) */
     public function backoff(): array
     {
         return [3, 18, 83, 258];

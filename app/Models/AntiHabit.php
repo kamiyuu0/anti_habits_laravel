@@ -150,7 +150,7 @@ class AntiHabit extends Model
             $antiHabit->checkAndUpdateGoalAchievement();
         });
 
-        // Rails の dependent: :destroy 相当
+        // 関連レコードを連動して削除する
         static::deleting(function (AntiHabit $antiHabit) {
             $antiHabit->antiHabitRecords()->delete();
             $antiHabit->reactions()->delete();

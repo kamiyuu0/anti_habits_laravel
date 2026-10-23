@@ -14,7 +14,7 @@ abstract class Model extends EloquentModel
     protected $dateFormat = 'Y-m-d H:i:s.u';
 
     /**
-     * Rails の update_column 相当。コールバック・updated_at の更新を行わずに 1 カラムだけ更新する。
+     * コールバック・updated_at の更新を行わずに 1 カラムだけ更新する。
      */
     public function updateColumn(string $column, mixed $value): void
     {
