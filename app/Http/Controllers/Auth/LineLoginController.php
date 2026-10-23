@@ -14,7 +14,6 @@ use Throwable;
 
 /**
  * LINE ログイン / ログイン済みユーザーへの LINE アカウント連携
- * (Rails 版の Users::OmniauthCallbacksController 相当)
  */
 class LineLoginController extends Controller
 {
