@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\ReactionKind;
 use App\Queries\WeeklyAchieversRanking;
 use App\Support\AppTime;
+use App\Support\OgpImage;
 use App\Support\RecordHistory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -128,6 +129,14 @@ class AntiHabit extends Model
         $query->where('anti_habits.title', 'like', self::likePattern($keyword));
     }
 
+    /** キーワード (タイトル/説明の部分一致) とタグ名での絞り込み。空の条件は無視する */
+    public function scopeSearchedBy(Builder $query, string $keyword = '', string $tagName = ''): void
+    {
+        $query
+            ->when($keyword !== '', fn (Builder $q) => $q->titleOrDescriptionMatching($keyword))
+            ->when($tagName !== '', fn (Builder $q) => $q->taggedWith($tagName));
+    }
+
     private static function likePattern(string $keyword): string
     {
         return '%'.addcslashes($keyword, '\\%_').'%';
@@ -219,18 +228,7 @@ class AntiHabit extends Model
     /** タイトルを埋め込んだ動的 OGP 画像の URL */
     public function ogpImageUrl(): string
     {
-        $fontSize = $this->ogpFontSize();
-
-        return "https://res.cloudinary.com/antihabits/image/upload/l_text:Sawarabi%20Gothic_{$fontSize}_solid:{$this->title},co_rgb:333,w_500,c_fit/v1757602327/anti_habits_dynamic_ogp_zyyjyk.png";
-    }
-
-    private function ogpFontSize(): string
-    {
-        return match (true) {
-            mb_strlen($this->title) > 15 => '25',
-            mb_strlen($this->title) > 10 => '30',
-            default => '50',
-        };
+        return OgpImage::urlFor($this->title);
     }
 
     // ---- タグ ----
