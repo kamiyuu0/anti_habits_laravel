@@ -22,7 +22,7 @@ class NotifyLineJob implements ShouldQueue
 
     public function __construct(public int $userId, public int $antiHabitId) {}
 
-    /** @return array<int, int> 指数的に増える待ち時間 (秒) */
+    /** @return array<int, int> 試行回数の 4 乗 + 2 で増える待ち時間 (秒) */
     public function backoff(): array
     {
         return [3, 18, 83, 258];
