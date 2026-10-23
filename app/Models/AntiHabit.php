@@ -83,6 +83,14 @@ class AntiHabit extends Model
         return $this->hasMany(Bookmark::class);
     }
 
+    // ---- 閲覧権限 ----
+
+    /** 公開中、または本人であれば閲覧できる */
+    public function isVisibleTo(?User $user): bool
+    {
+        return $this->is_public || ($user?->own($this) ?? false);
+    }
+
     // ---- スコープ ----
 
     public function scopePubliclyVisible(Builder $query): void

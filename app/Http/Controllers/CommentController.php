@@ -11,7 +11,7 @@ class CommentController extends Controller
 {
     public function store(Request $request, AntiHabit $antiHabit)
     {
-        abort_unless($antiHabit->is_public || $request->user()->own($antiHabit), 403);
+        abort_unless($antiHabit->isVisibleTo($request->user()), 403);
 
         $validator = Validator::make($request->only('body'), [
             'body' => ['required', 'string', 'max:'.Comment::MAX_BODY_LENGTH],

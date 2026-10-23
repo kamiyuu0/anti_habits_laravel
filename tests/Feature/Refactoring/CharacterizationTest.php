@@ -184,6 +184,22 @@ class CharacterizationTest extends TestCase
     }
 
     #[Test]
+    public function 他人の投稿への通知設定は入力が不正でも検証より先に拒否される(): void
+    {
+        $antiHabit = AntiHabit::factory()->create();
+        $url = "/anti_habits/{$antiHabit->id}/notification_setting";
+
+        $this->actingAs(User::factory()->lineLinked()->create())
+            ->post($url, ['notification_hour' => '99'])
+            ->assertRedirect('/anti_habits')
+            ->assertSessionHasNoErrors();
+        $this->actingAs(User::factory()->lineLinked()->create())
+            ->patch($url, ['notification_hour' => '99'])
+            ->assertRedirect('/anti_habits')
+            ->assertSessionHasNoErrors();
+    }
+
+    #[Test]
     public function 通知設定が無い場合の編集と更新は作成画面へ誘導する(): void
     {
         $owner = User::factory()->lineLinked()->create();
@@ -193,6 +209,10 @@ class CharacterizationTest extends TestCase
         $this->actingAs($owner)->get("/anti_habits/{$antiHabit->id}/notification_setting/edit")->assertRedirect($create);
         $this->actingAs($owner)->patch("/anti_habits/{$antiHabit->id}/notification_setting", ['notification_hour' => '10', 'notification_minute' => '00'])
             ->assertRedirect($create);
+        // 設定が無い場合は入力が不正でも検証せず作成画面へ誘導する
+        $this->actingAs($owner)->patch("/anti_habits/{$antiHabit->id}/notification_setting", ['notification_hour' => '99'])
+            ->assertRedirect($create)
+            ->assertSessionHasNoErrors();
     }
 
     // ---- 一覧の検索 ----
