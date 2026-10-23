@@ -5,7 +5,7 @@ namespace App\Models;
 use App\Enums\ReactionKind;
 use App\Queries\WeeklyAchieversRanking;
 use App\Support\AppTime;
-use Carbon\CarbonPeriod;
+use App\Support\RecordHistory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -174,25 +174,7 @@ class AntiHabit extends Model
     /** 今日 (未記録なら昨日) から遡った連続記録日数 */
     public function consecutiveDaysAchieved(): int
     {
-        $startDate = $this->todayRecord() ? AppTime::today() : AppTime::yesterday();
-
-        $records = $this->antiHabitRecords()
-            ->where('recorded_on', '<=', $startDate->toDateString())
-            ->orderByDesc('recorded_on')
-            ->pluck('recorded_on');
-
-        $count = 0;
-        $expectedDate = $startDate;
-
-        foreach ($records as $recordedOn) {
-            if ($recordedOn->toDateString() !== $expectedDate->toDateString()) {
-                break;
-            }
-            $count++;
-            $expectedDate = $expectedDate->subDay();
-        }
-
-        return $count;
+        return (new RecordHistory($this))->consecutiveDays();
     }
 
     public function goalReached(): bool
@@ -229,22 +211,7 @@ class AntiHabit extends Model
      */
     public function calendarData(int $days = 90): array
     {
-        $endDate = AppTime::today();
-        $startDate = $endDate->subDays($days - 1);
-
-        $recordedDates = $this->antiHabitRecords()
-            ->whereBetween('recorded_on', [$startDate->toDateString(), $endDate->toDateString()])
-            ->pluck('recorded_on')
-            ->map(fn ($date) => $date->toDateString())
-            ->flip();
-
-        $data = [];
-        foreach (CarbonPeriod::create($startDate, $endDate) as $date) {
-            $key = $date->toDateString();
-            $data[] = [$key, $recordedDates->has($key) ? 1 : 0];
-        }
-
-        return $data;
+        return (new RecordHistory($this))->calendar($days);
     }
 
     // ---- OGP ----
