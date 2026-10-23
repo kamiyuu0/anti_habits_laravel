@@ -11,7 +11,7 @@
         x-on:keydown.escape="open = false"
         x-on:keydown.arrow-down.prevent="active = Math.min(active + 1, options().length - 1)"
         x-on:keydown.arrow-up.prevent="active = Math.max(active - 1, 0)"
-        x-on:keydown.enter="if (open && active >= 0) { $event.preventDefault(); options()[active].click() }"
+        x-on:keydown.enter="if (open && active >= 0) { $event.preventDefault(); options()[active]?.click() }"
         autocomplete="off">
     <input type="submit" value="検索" class="btn btn-primary join-item">
   </div>

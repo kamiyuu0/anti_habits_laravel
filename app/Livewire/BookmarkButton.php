@@ -30,7 +30,7 @@ class BookmarkButton extends Component
     public function render(): View
     {
         return view('livewire.bookmark-button', [
-            'bookmarked' => auth()->user()->hasBookmarked($this->antiHabit),
+            'bookmarked' => auth()->user()?->hasBookmarked($this->antiHabit) ?? false,
         ]);
     }
 }

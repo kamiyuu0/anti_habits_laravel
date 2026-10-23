@@ -25,17 +25,20 @@ class ReactionButtons extends Component
         } else {
             $user->reaction($this->antiHabit, $kind);
         }
+
+        // 先読み済みの件数が古くならないようにする
+        $this->antiHabit->unsetRelation('reactions');
     }
 
     public function render(): View
     {
         $user = auth()->user();
-        $antiHabit = $this->antiHabit->unsetRelation('reactions');
+        $antiHabit = $this->antiHabit;
 
         return view('livewire.reaction-buttons', [
             'kinds' => collect(ReactionKind::cases())->map(fn (ReactionKind $kind) => [
                 'kind' => $kind,
-                'reacted' => $user->hasReacted($antiHabit, $kind),
+                'reacted' => $user?->hasReacted($antiHabit, $kind) ?? false,
                 'count' => $antiHabit->reactionCount($kind),
             ]),
         ]);
