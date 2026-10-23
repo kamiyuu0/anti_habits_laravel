@@ -25,8 +25,8 @@ RUN composer dump-autoload --optimize --no-dev --no-scripts
 FROM php:8.3.36-apache
 
 RUN apt-get update -qq \
-    && apt-get install --no-install-recommends -y libpq-dev libicu-dev libzip-dev \
-    && docker-php-ext-install pdo_pgsql intl zip opcache \
+    && apt-get install --no-install-recommends -y libicu-dev libzip-dev \
+    && docker-php-ext-install pdo_mysql intl zip opcache \
     && rm -rf /var/lib/apt/lists/*
 
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public \

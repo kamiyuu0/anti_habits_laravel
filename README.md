@@ -184,11 +184,11 @@ Anti Habitsは他のユーザーから擬似的に監視されている感覚を
 | フロントエンド | Tailwind CSS / DaisyUI / Hotwire (Turbo・Stimulus) / Vite | 
 | バックエンド | PHP 8.3 / Laravel 13 | 
 | インフラ | Render / Cloudinary(動的OGP画像生成) | 
-| データベース | PostgreSQL |
+| データベース | MySQL |
 | 環境構築 | Docker | 
 | CI/CD | GitHub Actions | 
 
-> Rails 7.2 版から Laravel 版へ移行しました。DB スキーマは Rails 版と完全に同一のため、既存のデータベースをそのまま利用できます（詳細は「Rails 版からの移行について」を参照）。
+> Rails 7.2 版から Laravel 版へ移行しました。DB は PostgreSQL から MySQL に移行しています（Laravel Cloud 東京リージョンが MySQL のみのため）。既存の PostgreSQL のデータは `php artisan db:import-from-pgsql` で取り込めます（「PostgreSQL から MySQL へのデータ移行」を参照）。
 
 ### 主要なパッケージ/外部サービスと用途
 #### 認証・セキュリティ
@@ -233,7 +233,7 @@ docker compose up
 初回起動時に `.env` の作成・マイグレーションまで自動で行います。開発用データは `docker compose exec web php artisan db:seed` で投入できます。
 
 ### ローカルの PHP / Node.js を使う場合
-PostgreSQL が必要です。手元に無い場合は DB だけ Docker で起動してください（`127.0.0.1:5432` で接続できます）。
+MySQL が必要です。手元に無い場合は DB だけ Docker で起動してください（`127.0.0.1:3306` で接続できます）。
 ```bash
 docker compose up -d db
 ```
@@ -250,12 +250,20 @@ php artisan schedule:work   # LINE 通知の定期実行を試す場合
 
 ### テスト・Lint
 ```bash
-php artisan test        # PostgreSQL の anti_habits_test データベースを使用
+php artisan test        # MySQL の anti_habits_test データベースを使用
 vendor/bin/pint --test
 ```
 
+## PostgreSQL から MySQL へのデータ移行
+1. 移行先の MySQL を用意し、`.env` の `DB_*` を MySQL に向けて `php artisan migrate` でスキーマを作成する。
+2. 移行元の PostgreSQL 接続を `PG_SOURCE_URL`（例: `postgres://user:pass@host:5432/dbname`）に設定する。
+3. 本番では事前にメンテナンスモードにする（`php artisan down`）か、書き込みを止める。
+4. `php artisan db:import-from-pgsql --dry-run` で各テーブルの件数を確認する。
+5. `php artisan db:import-from-pgsql` を実行する（移行先に既存データがあるテーブルは中断。上書きするなら `--truncate`）。件数は自動で突き合わせる。
+6. アプリの接続先を MySQL に切り替え、動作確認後に `php artisan up`。切り戻し用に移行元は一定期間残す。
+
 ## Rails 版からの移行について
-* **DB スキーマは Rails 版と同一**です（テーブル・カラム型・デフォルト値・インデックス名・外部キー名まで一致）。マイグレーションは既存テーブルがあれば何もしないため、本番 DB に対して `php artisan migrate` を実行しても既存データは変更されず、Laravel の管理用 `migrations` テーブルが追加されるだけです。
+* **DB スキーマは Rails 版（PostgreSQL）と同じ論理構成**です（テーブル・カラム・インデックス名・外部キー名まで一致。型は MySQL 相当）。マイグレーションは既存テーブルがあれば何もしないため、本番 DB に対して `php artisan migrate` を実行しても既存データは変更されず、Laravel の管理用 `migrations` テーブルが追加されるだけです。
 * セッション・キャッシュ・キューに DB テーブルを使わない設定（cookie / file / sync）にしているため、既存スキーマにテーブルを追加しません。
 * Devise で登録したユーザーは**同じパスワードでそのままログイン**できます（bcrypt 互換）。
 * 日時は Rails 版と同じく **UTC で保存**し、「今日」の判定や通知時刻の入力・表示は日本時間で行います（`notification_settings.notification_time` も Rails 版と同じく UTC で保存）。

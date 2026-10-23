@@ -19,8 +19,9 @@ if (! function_exists('rails_unique_index')) {
      */
     function rails_unique_index(string $table, array|string $columns, string $name): void
     {
-        $columns = implode(', ', array_map(fn ($c) => "\"{$c}\"", (array) $columns));
+        $grammar = DB::connection()->getQueryGrammar();
+        $columns = implode(', ', array_map(fn ($c) => $grammar->wrap($c), (array) $columns));
 
-        DB::statement("create unique index \"{$name}\" on \"{$table}\" ({$columns})");
+        DB::statement('create unique index '.$grammar->wrap($name).' on '.$grammar->wrapTable($table)." ({$columns})");
     }
 }
