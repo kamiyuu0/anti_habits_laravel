@@ -254,6 +254,8 @@ php artisan test        # MySQL の anti_habits_test データベースを使用
 vendor/bin/pint --test
 ```
 
+PR と `main` への push で、GitHub Actions（`.github/workflows/ci.yml`）が同じ内容を自動実行します。
+
 ## Rails 版からの移行について
 * **DB スキーマは Rails 版と同じ論理構成**です（テーブル・カラム・インデックス名・外部キー名まで一致。型は MySQL 相当）。マイグレーションは既存テーブルがあれば何もしないため、本番 DB に対して `php artisan migrate` を実行しても既存データは変更されず、Laravel の管理用 `migrations` テーブルが追加されるだけです。
 * セッション・キャッシュ・キューに DB テーブルを使わない設定（cookie / file / sync）にしているため、既存スキーマにテーブルを追加しません。
